@@ -29,6 +29,7 @@
     "postpack": "clean-package restore"
   },
   "dependencies": {
+    "@cabloy/module-info": "^2.0.0",
     "@quasar/app-vite": "npm:@cabloy/quasar-app-vite@^2.5.9",
     "chalk": "^3.0.0",
     "esbuild": "^0.25.12",
