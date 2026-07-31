@@ -35,7 +35,7 @@ export function extendViteConf(context: ConfigContext) {
     if (opts.isClient) {
       conf.server = mergeConfig(conf.server || {}, {
         hmr: {
-          port: 24679,
+          port: Number(process.env.DEV_SERVER_HMR_PORT),
         },
       });
     } else {
