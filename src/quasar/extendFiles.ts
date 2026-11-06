@@ -2,14 +2,15 @@ import type { IndexAPI } from '@quasar/app-vite';
 
 import fse from 'fs-extra';
 import path from 'node:path';
-import { copyTemplateFile, getAbsolutePathOfModule, getOutDir } from 'zova-vite';
+import { copyTemplateFile, getAbsolutePathOfModule } from 'zova-vite';
 
-import type { QuasarConf } from './types.js';
+import type { ConfigContext, QuasarConf } from './types.js';
 
 import { resolveTemplatePath } from '../utils.js';
 
-export function extendFilesOne(api: IndexAPI, flavor: string) {
+export function extendFilesOne(context: ConfigContext, api: IndexAPI, flavor: string) {
   return async function extendFiles() {
+    if (context.isolated) return;
     // prepare templates
     await prepareTemplates();
   };
@@ -40,8 +41,9 @@ export function extendFilesOne(api: IndexAPI, flavor: string) {
   }
 }
 
-export function extendFilesTwo(_api: IndexAPI, _flavor: string) {
+export function extendFilesTwo(context: ConfigContext, _api: IndexAPI, _flavor: string) {
   return async function extendFiles() {
+    if (context.isolated) return;
     // patch templates
     // await patchTemplates();
     // prepare vuetify
@@ -155,7 +157,12 @@ export function extendFilesTwo(_api: IndexAPI, _flavor: string) {
   }
 }
 
-export function extendFilesThree(conf: QuasarConf, api: IndexAPI, _flavor: string) {
+export function extendFilesThree(
+  context: ConfigContext,
+  conf: QuasarConf,
+  api: IndexAPI,
+  _flavor: string,
+) {
   return async function extendFiles() {
     // patch templates
     await patchTemplates();
@@ -172,14 +179,17 @@ export function extendFilesThree(conf: QuasarConf, api: IndexAPI, _flavor: strin
   async function _handleSSRProdWebserver() {
     const fileSrc = resolveTemplatePath('entry/ssr-prod-webserver.js_');
     const fileDest = (api.resolve as any).entry('ssr-prod-webserver.js');
-    await copyTemplateFile(fileSrc, fileDest, Object.assign({}, conf, { __outDir__: getOutDir() }));
+    await copyTemplateFile(fileSrc, fileDest, conf);
   }
 
   // ssr-prod-handler.js
   async function _handleSSRProdHandler() {
     const fileSrc = resolveTemplatePath('entry/ssr-prod-handler.js_');
     const fileDest = (api.resolve as any).entry('ssr-prod-handler.js');
-    await copyTemplateFile(fileSrc, fileDest, { __outDir__: getOutDir() });
+    // Only this build-time import uses the scratch path. esbuild bundles it into
+    // handler.js, whose render-template import remains relative to its own entry.
+    const serverEntry = path.join(context.outDir!, 'server/server-entry.js').replaceAll('\\', '/');
+    await copyTemplateFile(fileSrc, fileDest, { __serverEntry__: JSON.stringify(serverEntry) });
   }
 }
 

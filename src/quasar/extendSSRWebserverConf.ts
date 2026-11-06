@@ -1,8 +1,6 @@
 import type { IndexAPI } from '@quasar/app-vite';
 import type { BuildOptions } from 'esbuild';
 
-import { getOutDir } from 'zova-vite';
-
 import type { ConfigContext } from './types.js';
 
 export function extendSSRWebserverConf(context: ConfigContext) {
@@ -18,7 +16,7 @@ export function extendSSRWebserverConf(context: ConfigContext) {
     //   { in: (api.resolve as any).entry('ssr-prod-webserver.js'), out: 'index' },
     //   { in: (api.resolve as any).entry('ssr-prod-handler.js'), out: 'handler' },
     // ];
-    conf.outdir = getOutDir();
+    conf.outdir = context.outDir!;
     delete conf.outfile;
     // buildsPatch
     (conf as any).buildsPatch = [

@@ -21,15 +21,13 @@ import { printBanner } from './printBanner.js';
 export async function quasar(api: IndexAPI) {
   // flavor
   const flavor = getFlavor();
+  // Capture run ownership before loading application env files.
+  const context: ConfigContext = {
+    isolated: process.env.ZOVA_ISOLATED === 'true',
+  };
   // files
-  await extendFilesOne(api, flavor)();
-  await extendFilesTwo(api, flavor)();
-  // context
-  const context = {
-    configMeta: undefined,
-    configOptions: undefined,
-    zovaViteMeta: undefined,
-  } as ConfigContext;
+  await extendFilesOne(context, api, flavor)();
+  await extendFilesTwo(context, api, flavor)();
   // config
   api.extendQuasarConf(extendQuasarConf(context, flavor));
   api.extendViteConf(extendViteConf(context));
@@ -40,11 +38,11 @@ export async function quasar(api: IndexAPI) {
   });
   // before build
   api.beforeBuild(async (api, { quasarConf }) => {
-    await extendFilesThree(quasarConf, api, flavor)();
+    await extendFilesThree(context, quasarConf, api, flavor)();
   });
   // after build
   api.afterBuild(async (api, { quasarConf }) => {
     printBanner(context, flavor, false)(quasarConf, api);
-    extendAfterBuild(context, flavor)(quasarConf, api);
+    await extendAfterBuild(context, flavor)(quasarConf, api);
   });
 }

@@ -1,6 +1,7 @@
 import type { ZovaConfigMeta, ZovaMetaFlavor } from '@cabloy/module-info';
 import type { IndexAPI } from '@quasar/app-vite';
 
+import path from 'node:path';
 import { mergeConfig } from 'vite';
 import { generateZovaViteMeta } from 'zova-vite';
 
@@ -18,7 +19,7 @@ export function extendQuasarConf(context: ConfigContext, flavor: ZovaMetaFlavor)
     };
     const configOptions = {
       appDir: appPaths.appDir,
-      runtimeDir: '.zova',
+      runtimeDir: process.env.ZOVA_RUNTIME_DIR || '.zova',
       zovaManualChunk: (<any>conf).zovaManualChunk,
     };
     // zovaViteMeta
@@ -48,8 +49,10 @@ export function extendQuasarConf(context: ConfigContext, flavor: ZovaMetaFlavor)
       return [item[1], item[2], item[3]];
     });
     conf.build.vitePlugins = (conf.build.vitePlugins || []).concat(vitePlugins as any);
+    // Resolve once so Vite, SSR templates and afterBuild share the physical output path.
+    context.outDir = path.resolve(appPaths.appDir, zovaViteMeta.viteConfig.build.outDir);
     // build: distDir
-    conf.build.distDir = zovaViteMeta.viteConfig.build.outDir;
+    conf.build.distDir = context.outDir;
     // build: analyze
     conf.build.analyze = conf.build.analyze ?? process.env.BUILD_ANALYZE === 'true';
     // build: target

@@ -2,16 +2,18 @@ import type { IndexAPI } from '@quasar/app-vite';
 
 import fse from 'fs-extra';
 import path from 'node:path';
-import { getOutDir, getOutReleasesDir } from 'zova-vite';
+import { getOutReleasesDir } from 'zova-vite';
 
 import type { ConfigContext, QuasarConf } from './types.js';
 
 export function extendAfterBuild(context: ConfigContext, _flavor: string) {
   return async function extendAfterBuild(_conf: QuasarConf, _api: IndexAPI) {
     const appDir = context.configOptions!.appDir;
-    const outDir = path.join(appDir, getOutDir());
-    // remove dist/ssr/server
+    const outDir = context.outDir!;
+    // remove dist/ssr/server: bundled into handler.js by the webserver build
     fse.removeSync(path.join(outDir, 'server'));
+    // The runner owns scratch cleanup and publication after the SSR/REST pair succeeds.
+    if (context.isolated) return;
     // remove zova/runtime
     fse.removeSync(path.join(appDir, context.configOptions!.runtimeDir));
     // copy
